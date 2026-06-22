@@ -4,265 +4,203 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE REENO GROUP - Virtual Property Showcase</title>
+    <!-- Tailwind CSS for Premium Design -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Alpine.js for Live Calculations and Interactivity (Loads instantly, NO compiler required) -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-[#0A0D0A] text-[#E5EAE5] antialiased">
+<body class="bg-[#0A0D0A] text-[#E5EAE5] antialiased" 
+      x-data="{ 
+          currency: 'USD', 
+          rates: { USD: 1, UGX: 3750, EUR: 0.92 }, 
+          symbols: { USD: '$', UGX: 'UGX ', EUR: '€' },
+          filterStatus: 'ALL',
+          selectedUnit: { id: '102', type: '2 Bedroom Suite', priceUSD: 145000, status: 'AVAILABLE', floor: 1, size: '110 SQM' },
+          booking: { date: '', timeSlot: '', name: '', whatsapp: '' },
+          isBooked: false,
+          units: [
+              { id: '101', type: '1 Bedroom Loft', priceUSD: 85000, status: 'SOLD', floor: 1, size: '65 SQM' },
+              { id: '102', type: '2 Bedroom Suite', priceUSD: 145000, status: 'AVAILABLE', floor: 1, size: '110 SQM' },
+              { id: '103', type: '1 Bedroom Loft', priceUSD: 88000, status: 'AVAILABLE', floor: 1, size: '68 SQM' },
+              { id: '201', type: '2 Bedroom Suite', priceUSD: 150000, status: 'PENDING', floor: 2, size: '115 SQM' },
+              { id: '202', type: '3 Bedroom Penthouse', priceUSD: 280000, status: 'AVAILABLE', floor: 2, size: '210 SQM' },
+              { id: '203', type: '2 Bedroom Suite', priceUSD: 148000, status: 'SOLD', floor: 2, size: '112 SQM' },
+              { id: '301', type: '3 Bedroom Penthouse', priceUSD: 295000, status: 'AVAILABLE', floor: 3, size: '220 SQM' }
+          ],
+          formatPrice(usdAmount) {
+              let converted = usdAmount * this.rates[this.currency];
+              return this.symbols[this.currency] + Math.round(converted).toLocaleString();
+          }
+      }">
 
-    <div id="root"></div>
+    <div class="min-h-screen max-w-7xl mx-auto px-4 py-8 md:py-12">
+        
+        <!-- Header Nav -->
+        <header class="flex flex-col sm:flex-row justify-between items-center border-b border-[#1A221B] pb-6 mb-10 gap-4">
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-widest text-white uppercase">
+                    THE REENO GROUP
+                </h1>
+                <p class="text-xs text-[#C9A84C] tracking-wider mt-0.5">VIRTUAL PROPERTY SHOWCASE</p>
+            </div>
+            
+            <!-- Global Currency Converter Control -->
+            <div class="flex items-center gap-2 bg-[#121813] border border-[#1A221B] p-1 rounded-xl">
+                <template x-for="cur in Object.keys(rates)">
+                    <button 
+                        @click="currency = cur"
+                        :class="currency === cur ? 'bg-[#C9A84C] text-[#0A0D0A]' : 'text-gray-400 hover:text-white'"
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                        x-text="cur">
+                    </button>
+                </template>
+            </div>
+        </header>
 
-    <script type="text/babel">
-        // Strictly pull hooks from global React scope. Absolutely NO imports allowed below this line.
-        const { useState, useMemo } = React;
-
-        const RATES = { USD: 1, UGX: 3750, EUR: 0.92 };
-        const SYMBOLS = { USD: "$", UGX: "UGX ", EUR: "€" };
-
-        const INITIAL_UNITS = [
-            { id: "101", type: "1 Bedroom Loft", priceUSD: 85000, status: "SOLD", floor: 1, size: "65 SQM" },
-            { id: "102", type: "2 Bedroom Suite", priceUSD: 145000, status: "AVAILABLE", floor: 1, size: "110 SQM" },
-            { id: "103", type: "1 Bedroom Loft", priceUSD: 88000, status: "AVAILABLE", floor: 1, size: "68 SQM" },
-            { id: "201", type: "2 Bedroom Suite", priceUSD: 150000, status: "PENDING", floor: 2, size: "115 SQM" },
-            { id: "202", type: "3 Bedroom Penthouse", priceUSD: 280000, status: "AVAILABLE", floor: 2, size: "210 SQM" },
-            { id: "203", type: "2 Bedroom Suite", priceUSD: 148000, status: "SOLD", floor: 2, size: "112 SQM" },
-            { id: "301", type: "3 Bedroom Penthouse", priceUSD: 295000, status: "AVAILABLE", floor: 3, size: "220 SQM" }
-        ];
-
-        function PropertyShowcase() {
-            const [currency, setCurrency] = useState("USD");
-            const [filterStatus, setFilterStatus] = useState("ALL");
-            const [selectedUnit, setSelectedUnit] = useState(INITIAL_UNITS[1]);
-            const [booking, setBooking] = useState({ date: "", timeSlot: "", name: "", whatsapp: "" });
-            const [isBooked, setIsBooked] = useState(false);
-
-            const formatPrice = (usdAmount) => {
-                const converted = usdAmount * RATES[currency];
-                return SYMBOLS[currency] + Math.round(converted).toLocaleString();
-            };
-
-            const filteredUnits = useMemo(() => {
-                if (filterStatus === "ALL") return INITIAL_UNITS;
-                return INITIAL_UNITS.filter(u => u.status === filterStatus);
-            }, [filterStatus]);
-
-            const handleBookingSubmit = (e) => {
-                e.preventDefault();
-                if (booking.name && booking.whatsapp) {
-                    setIsBooked(true);
-                }
-            };
-
-            return (
-                <div className="min-h-screen max-w-7xl mx-auto px-4 py-8 md:py-12">
-                    {/* Header Nav */}
-                    <header className="flex flex-col sm:flex-row justify-between items-center border-b border-[#1A221B] pb-6 mb-10 gap-4">
+        <!-- Main Content Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Matrix Map Layout Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
-                            <h1 className="text-xl md:text-2xl font-black tracking-widest text-white uppercase">
-                                THE REENO GROUP
-                            </h1>
-                            <p className="text-xs text-[#C9A84C] tracking-wider mt-0.5">VIRTUAL PROPERTY SHOWCASE</p>
+                            <h2 class="text-white font-bold text-lg">Interactive Building Map</h2>
+                            <p class="text-xs text-gray-400">Select an apartment unit layout below to view details</p>
                         </div>
                         
-                        {/* Global Currency Converter Control */}
-                        <div className="flex items-center gap-2 bg-[#121813] border border-[#1A221B] p-1 rounded-xl">
-                            {Object.keys(RATES).map((cur) => (
-                                <button 
-                                    key={cur}
-                                    onClick={() => setCurrency(cur)}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${currency === cur ? "bg-[#C9A84C] text-[#0A0D0A]" : "text-gray-400 hover:text-white"}`}
-                                >
-                                    {cur}
+                        <!-- Availability Status Filters -->
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="status in ['ALL', 'AVAILABLE', 'PENDING', 'SOLD']">
+                                <button
+                                    @click="filterStatus = status"
+                                    :class="filterStatus === status ? 'bg-white/10 text-white border border-white/20' : 'text-gray-500 hover:text-gray-300'"
+                                    class="px-3 py-1 rounded-md text-[10px] font-bold tracking-wider transition"
+                                    x-text="status">
                                 </button>
-                            ))}
-                        </div>
-                    </header>
-
-                    {/* Main Grid Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        
-                        {/* Interactive Map & Matrix (Left Column - 2 Blocks Wide) */}
-                        <div className="lg:col-span-2 space-y-6">
-                            <div className="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                    <div>
-                                        <h2 className="text-white font-bold text-lg">Interactive Building Map</h2>
-                                        <p className="text-xs text-gray-400">Select an apartment unit layout below to view details</p>
-                                    </div>
-                                    
-                                    {/* Availability Filters */}
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {["ALL", "AVAILABLE", "PENDING", "SOLD"].map((status) => (
-                                            <button
-                                                key={status}
-                                                onClick={() => setFilterStatus(status)}
-                                                className={`px-3 py-1 rounded-md text-[10px] font-bold tracking-wider transition ${filterStatus === status ? "bg-white/10 text-white border border-white/20" : "text-gray-500 hover:text-gray-300"}`}
-                                            >
-                                                {status}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Dynamic Graphic Grid Map */}
-                                <div className="space-y-3">
-                                    {[3, 2, 1].map((floorNum) => (
-                                        <div key={floorNum} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-[#0A0D0A]/50 p-3 rounded-xl border border-[#1A221B]/60">
-                                            <span className="text-[10px] uppercase font-bold tracking-widest text-[#C9A84C] w-16">
-                                                Floor 0{floorNum}
-                                            </span>
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 w-full">
-                                                {filteredUnits.filter(u => u.floor === floorNum).map((unit) => {
-                                                    const isSelected = selectedUnit?.id === unit.id;
-                                                    let statusColor = "border-emerald-500/20 bg-emerald-500/5 text-emerald-400";
-                                                    if (unit.status === "SOLD") statusColor = "border-rose-500/20 bg-rose-500/5 text-rose-500 opacity-60";
-                                                    if (unit.status === "PENDING") statusColor = "border-amber-500/20 bg-amber-500/5 text-amber-400";
-
-                                                    return (
-                                                        <button
-                                                            key={unit.id}
-                                                            onClick={() => setSelectedUnit(unit)}
-                                                            className={`p-3 rounded-lg border text-left transition-all ${statusColor} ${isSelected ? "ring-2 ring-[#C9A84C] border-transparent" : "hover:scale-[1.01]"}`}
-                                                        >
-                                                            <div className="flex justify-between items-center mb-1">
-                                                                <span className="font-mono text-xs font-bold text-white">Unit {unit.id}</span>
-                                                                <span className="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-black/40">
-                                                                    {unit.status}
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-[10px] text-gray-400 truncate">{unit.type}</p>
-                                                            <p className="text-xs font-bold mt-2 text-white">{formatPrice(unit.priceUSD)}</p>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Interactive Sidebar Panel (Right Column - Unit details & Booking) */}
-                        <div className="space-y-6">
-                            {/* Selected Unit Details Panel */}
-                            <div className="bg-[#121813] border border-[#1A221B] rounded-2xl p-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 bg-[#C9A84C]/10 text-[#C9A84C] text-[9px] tracking-widest uppercase font-bold px-3 py-1 rounded-bl-lg">
-                                    Live Specifications
-                                </div>
-                                
-                                <h3 className="text-white font-bold text-base mb-4">Unit Matrix Details</h3>
-                                {selectedUnit ? (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-xs text-gray-500">Residence Configuration</p>
-                                            <p className="text-lg font-bold text-white mt-0.5">{selectedUnit.type}</p>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4 border-y border-[#1A221B] py-3 my-2">
-                                            <div>
-                                                <p className="text-[10px] text-gray-500">Floor Layout</p>
-                                                <p className="text-sm font-semibold text-white">Level 0{selectedUnit.floor}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-gray-500">Total Built Area</p>
-                                                <p className="text-sm font-semibold text-white">{selectedUnit.size}</p>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-400">Indicative Investment Base</p>
-                                            <p className="text-2xl font-black text-[#C9A84C] mt-1">{formatPrice(selectedUnit.priceUSD)}</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-xs text-gray-400">Please choose a property layout from the map matrix to review parameters.</p>
-                                )}
-                            </div>
-
-                            {/* Automated Site-Visit Booking Calendar Widget */}
-                            <div className="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
-                                <h3 className="text-white font-bold text-base mb-2">Schedule Private Site Tour</h3>
-                                <p className="text-xs text-gray-400 mb-4">Select an available date below to arrange an physical or virtual viewing.</p>
-                                
-                                {!isBooked ? (
-                                    <form onSubmit={handleBookingSubmit} className="space-y-3">
-                                        <div>
-                                            <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Target Date</label>
-                                            <input 
-                                                type="date" 
-                                                required
-                                                value={booking.date} 
-                                                onChange={e => setBooking({...booking, date: e.target.value})}
-                                                className="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]" 
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Preferred Time Window</label>
-                                            <div className="grid grid-cols-3 gap-1.5">
-                                                {["Morning", "Midday", "Evening"].map(slot => (
-                                                    <button
-                                                        type="button"
-                                                        key={slot}
-                                                        onClick={() => setBooking({...booking, timeSlot: slot})}
-                                                        className={`py-2 rounded-md text-[11px] font-medium border transition ${booking.timeSlot === slot ? "bg-[#C9A84C] text-[#0A0D0A] border-transparent" : "bg-[#0A0D0A] border-[#1A221B] text-gray-400"}`}
-                                                    >
-                                                        {slot}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Full Name</label>
-                                            <input 
-                                                type="text" 
-                                                placeholder="John Doe"
-                                                required
-                                                value={booking.name}
-                                                onChange={e => setBooking({...booking, name: e.target.value})}
-                                                className="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" 
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">WhatsApp Line</label>
-                                            <input 
-                                                type="tel" 
-                                                placeholder="+256 700 000000"
-                                                required
-                                                value={booking.whatsapp}
-                                                onChange={e => setBooking({...booking, whatsapp: e.target.value})}
-                                                className="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" 
-                                            />
-                                        </div>
-
-                                        <button 
-                                            type="submit"
-                                            className="w-full bg-[#C9A84C] text-[#0A0D0A] font-bold py-3 rounded-xl uppercase tracking-widest text-[10px] hover:bg-[#b0923d] transition-colors mt-2"
-                                        >
-                                            Confirm Appointment
-                                        </button>
-                                    </form>
-                                ) : (
-                                    <div className="text-center py-6 bg-[#0A0D0A]/40 border border-emerald-500/20 rounded-xl p-4">
-                                        <div className="text-emerald-400 text-2xl mb-2">✓</div>
-                                        <h4 className="text-white font-bold text-sm">Site Visit Requested</h4>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Thank you {booking.name}. Your booking window for the **{booking.timeSlot || "selected"}** session on **{booking.date}** has been compiled. Concierge tracking will initiate on WhatsApp at {booking.whatsapp}.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
+                            </template>
                         </div>
                     </div>
-                </div>
-            );
-        }
 
-        // Mount to global DOM Node element
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<PropertyShowcase />);
-    </script>
+                    <!-- Dynamic Building Map Grid Rows -->
+                    <div class="space-y-3">
+                        <template x-for="floorNum in [3, 2, 1]">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-[#0A0D0A]/50 p-3 rounded-xl border border-[#1A221B]/60">
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-[#C9A84C] w-16" x-text="'Floor 0' + floorNum"></span>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 w-full">
+                                    <template x-for="unit in units.filter(u => u.floor === floorNum)">
+                                        <!-- Only show unit if matching filter state criteria -->
+                                        <button
+                                            x-show="filterStatus === 'ALL' || filterStatus === unit.status"
+                                            @click="selectedUnit = unit"
+                                            :class="{
+                                                'ring-2 ring-[#C9A84C] border-transparent': selectedUnit && selectedUnit.id === unit.id,
+                                                'border-emerald-500/20 bg-emerald-500/5 text-emerald-400': unit.status === 'AVAILABLE',
+                                                'border-rose-500/20 bg-rose-500/5 text-rose-500 opacity-60': unit.status === 'SOLD',
+                                                'border-amber-500/20 bg-amber-500/5 text-amber-400': unit.status === 'PENDING'
+                                            }"
+                                            class="p-3 rounded-lg border text-left transition-all hover:scale-[1.01]">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="font-mono text-xs font-bold text-white" x-text="'Unit ' + unit.id"></span>
+                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-black/40" x-text="unit.status"></span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 truncate" x-text="unit.type"></p>
+                                            <p class="text-xs font-bold mt-2 text-white" x-text="formatPrice(unit.priceUSD)"></p>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactivity Sidebar -->
+            <div class="space-y-6">
+                <!-- Unit Parameters Details -->
+                <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-[#C9A84C]/10 text-[#C9A84C] text-[9px] tracking-widest uppercase font-bold px-3 py-1 rounded-bl-lg">
+                        Live Specifications
+                    </div>
+                    
+                    <h3 class="text-white font-bold text-base mb-4">Unit Matrix Details</h3>
+                    <div x-show="selectedUnit" class="space-y-4">
+                        <div>
+                            <p class="text-xs text-gray-500">Residence Configuration</p>
+                            <p class="text-lg font-bold text-white mt-0.5" x-text="selectedUnit.type"></p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 border-y border-[#1A221B] py-3 my-2">
+                            <div>
+                                <p class="text-[10px] text-gray-500">Floor Layout</p>
+                                <p class="text-sm font-semibold text-white" x-text="'Level 0' + selectedUnit.floor"></p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500">Total Built Area</p>
+                                <p class="text-sm font-semibold text-white" x-text="selectedUnit.size"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">Indicative Investment Base</p>
+                            <p class="text-2xl font-black text-[#C9A84C] mt-1" x-text="formatPrice(selectedUnit.priceUSD)"></p>
+                        </div>
+                    </div>
+                    <div x-show="!selectedUnit">
+                        <p class="text-xs text-gray-400">Select an apartment unit layout from the map matrix to review parameters.</p>
+                    </div>
+                </div>
+
+                <!-- Calendar Visit Booking Form -->
+                <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
+                    <h3 class="text-white font-bold text-base mb-2">Schedule Private Site Tour</h3>
+                    <p class="text-xs text-gray-400 mb-4">Select an available date below to arrange a physical or virtual viewing.</p>
+                    
+                    <form x-show="!isBooked" @submit.prevent="if(booking.name && booking.whatsapp) isBooked = true" class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Target Date</label>
+                            <input type="date" required x-model="booking.date" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]" />
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Preferred Time Window</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <template x-for="slot in ['Morning', 'Midday', 'Evening']">
+                                    <button type="button" @click="booking.timeSlot = slot"
+                                        :class="booking.timeSlot === slot ? 'bg-[#C9A84C] text-[#0A0D0A] border-transparent' : 'bg-[#0A0D0A] border-[#1A221B] text-gray-400'"
+                                        class="py-2 rounded-md text-[11px] font-medium border transition" x-text="slot">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Full Name</label>
+                            <input type="text" placeholder="John Doe" required x-model="booking.name" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">WhatsApp Line</label>
+                            <input type="tel" placeholder="+256 700 000000" required x-model="booking.whatsapp" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
+                        </div>
+
+                        <button type="submit" class="w-full bg-[#C9A84C] text-[#0A0D0A] font-bold py-3 rounded-xl uppercase tracking-widest text-[10px] hover:bg-[#b0923d] transition-colors mt-2">
+                            Confirm Appointment
+                        </button>
+                    </form>
+
+                    <!-- Success State Notice -->
+                    <div x-show="isBooked" class="text-center py-6 bg-[#0A0D0A]/40 border border-emerald-500/20 rounded-xl p-4" x-cloak>
+                        <div class="text-emerald-400 text-2xl mb-2">✓</div>
+                        <h4 class="text-white font-bold text-sm">Site Visit Requested</h4>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Thank you <span class="text-white font-bold" x-text="booking.name"></span>. Your session on <span class="text-white font-bold" x-text='booking.date'></span> has been compiled. Concierge tracking will initiate on WhatsApp at <span class="text-white font-bold" x-text="booking.whatsapp"></span>.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
