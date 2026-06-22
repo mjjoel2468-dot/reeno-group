@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE REENO GROUP - Virtual Property Showcase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #080B08; color: #E5EAE5; margin: 0; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0D110D; }
+        ::-webkit-scrollbar-thumb { background: #B8963E; border-radius: 2px; }
+        .font-display { font-family: 'Cormorant Garamond', serif; }
+        .font-body { font-family: 'Inter', sans-serif; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.7s ease forwards; }
+        .animate-delay-1 { animation-delay: 0.15s; opacity: 0; }
+        .animate-delay-2 { animation-delay: 0.3s; opacity: 0; }
+        .animate-delay-3 { animation-delay: 0.45s; opacity: 0; }
+        .shimmer-text {
+            background: linear-gradient(90deg, #C9A84C 0%, #F0D87A 40%, #C9A84C 60%, #8A6820 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s linear infinite;
+        }
+        .unit-card { transition: all 0.2s ease; cursor: pointer; position: relative; overflow: hidden; }
+        .unit-card::after { content: ''; position: absolute; inset: 0; background: rgba(201,168,76,0); transition: background 0.2s ease; }
+        .unit-card:hover::after { background: rgba(201,168,76,0.07); }
+        .unit-card.selected { box-shadow: 0 0 0 2px #C9A84C; animation: pulse-gold 2s infinite; }
+        .glass { background: rgba(13,17,13,0.85); backdrop-filter: blur(16px); border: 1px solid rgba(201,168,76,0.18); }
+        .input-field {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(201,168,76,0.2);
+            color: #E5EAE5;
+            transition: border-color 0.2s ease;
+            outline: none;
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border-radius: 2px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+        }
+        .input-field:focus { border-color: #C9A84C; background: rgba(201,168,76,0.04); }
+        .input-field::placeholder { color: #4A5A4A; }
+        select.input-field option { background: #0D110D; }
+        .btn-gold {
+            background: linear-gradient(135deg, #B8963E 0%, #D4AF50 50%, #B8963E 100%);
+            color: #0A0D0A;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.8rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.75rem 2rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-gold:active { transform: translateY(0); }
+        .btn-outline {
+            background: transparent;
+            color: #C9A84C;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 0.75rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.5rem 1.25rem;
+            border: 1px solid #C9A84C;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-outline:hover { background: rgba(201,168,76,0.1); }
+        .btn-outline.active { background: #C9A84C; color: #0A0D0A; }
+        .divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent); }
+        .stat-card { border-top: 1px solid rgba(201,168,76,0.3); padding-top: 1rem; }
+        .floor-label { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.65rem; letter-spacing: 0.1em; color: #4A5A4A; text-transform: uppercase; font-family: 'Inter', sans-serif; }
+        .cal-day { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; border-radius: 2px; cursor: pointer; transition: all 0.15s ease; font-family: 'Inter', sans-serif; color: #E5EAE5; }
+        .cal-day:hover:not(.disabled):not(.empty) { background: rgba(201,168,76,0.15); color: #C9A84C; }
+        .cal-day.selected-day { background: #C9A84C; color: #0A0D0A; font-weight: 500; }
+        .cal-day.today { border: 1px solid rgba(201,168,76,0.5); color: #C9A84C; }
+        .cal-day.disabled { color: #2A3A2A; cursor: not-allowed; }
+        .cal-day.empty { cursor: default; }
+        .section-eyebrow { font-family: 'Inter', sans-serif; font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A84C; }
+        .nav-link { font-family: 'Inter', sans-serif; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: #7A8A7A; cursor: pointer; transition: color 0.2s; text-decoration: none; }
+        .nav-link:hover { color: #C9A84C; }
+        .tag { display: inline-block; font-family: 'Inter', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 1px; }
+        .booking-confirmation { animation: fadeUp 0.5s ease forwards; }
+        @media (max-width: 640px) {
+            .cal-day { width: 30px; height: 30px; font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const RATES = { USD: 1, UGX: 3750, EUR: 0.92 };
+        const SYMBOLS = { USD: "$", UGX: "UGX ", EUR: "€" };
+
+        const FLOORS = [
+            {
+                floor: 5, label: "Penthouse Level",
+                units: [
+                    { id: "501", type: "Sky Penthouse", beds: 4, baths: 4, sqft: 3200, priceUSD: 580000, status: "AVAILABLE", view: "City Panorama" },
+                    { id: "502", type: "Sky Penthouse", beds: 4, baths: 3, sqft: 2900, priceUSD: 520000, status: "SOLD", view: "Lake & Hills" },
+                ]
+            },
+            {
+                floor: 4, label: "Prestige Floor",
+                units: [
+                    { id: "401", type: "3 Bed Suite", beds: 3, baths: 3, sqft: 1900, priceUSD: 320000, status: "AVAILABLE", view: "City View" },
+                    { id: "402", type: "3 Bed Suite", beds: 3, baths: 2, sqft: 1850, priceUSD: 310000, status: "PENDING", view: "Garden View" },
+                    { id: "403", type: "2 Bed Terrace", beds: 2, baths: 2, sqft: 1400, priceUSD: 215000, status: "SOLD", view: "City View" },
+                ]
+            },
+            {
+                floor: 3, label: "Executive Floor",
+                units: [
+                    { id: "301", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1350, priceUSD: 195000, status: "AVAILABLE", view: "Pool View" },
+                    { id: "302", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1350, priceUSD: 195000, status: "AVAILABLE", view: "Garden View" },
+                    { id: "303", type: "3 Bed Suite", beds: 3, baths: 2, sqft: 1800, priceUSD: 290000, status: "PENDING", view: "City View" },
+                    { id: "304", type: "1 Bed Studio", beds: 1, baths: 1, sqft: 750, priceUSD: 98000, status: "SOLD", view: "City View" },
+                ]
+            },
+            {
+                floor: 2, label: "Grand Floor",
+                units: [
+                    { id: "201", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1300, priceUSD: 185000, status: "SOLD", view: "Pool View" },
+                    { id: "202", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1300, priceUSD: 182000, status: "AVAILABLE", view: "Garden View" },
+                    { id: "203", type: "3 Bed Suite", beds: 3, baths: 2, sqft: 1750, priceUSD: 275000, status: "AVAILABLE", view: "City View" },
+                    { id: "204", type: "1 Bed Studio", beds: 1, baths: 1, sqft: 720, priceUSD: 92000, status: "PENDING", view: "Garden View" },
+                ]
+            },
+            {
+                floor: 1, label: "Garden Level",
+                units: [
+                    { id: "101", type: "1 Bed Loft", beds: 1, baths: 1, sqft: 700, priceUSD: 85000, status: "SOLD", view: "Garden Access" },
+                    { id: "102", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1250, priceUSD: 175000, status: "AVAILABLE", view: "Garden Access" },
+                    { id: "103", type: "2 Bed Suite", beds: 2, baths: 2, sqft: 1250, priceUSD: 172000, status: "SOLD", view: "Garden Access" },
+                    { id: "104", type: "3 Bed Suite", beds: 3, baths: 2, sqft: 1700, priceUSD: 260000, status: "AVAILABLE", view: "Garden Access" },
+                ]
+            }
+        ];
+
+        const STATUS_CONFIG = {
+            AVAILABLE: { label: "Available", color: "#4CAF82", bg: "rgba(76,175,130,0.12)", dot: "#4CAF82" },
+            PENDING:   { label: "Pending",   color: "#D4A849", bg: "rgba(212,168,73,0.12)",  dot: "#D4A849" },
+            SOLD:      { label: "Sold",      color: "#C05252", bg: "rgba(192,82,82,0.12)",   dot: "#C05252" },
+        };
+
+        const TIME_SLOTS = ["9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"];
+        const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+
+        function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+        function getFirstDay(y, m) { return new Date(y, m, 1).getDay(); }
+
+        function CurrencySelector({ currency, setCurrency }) {
+            return (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    {Object.keys(RATES).map(c => (
+                        <button key={c}
+                            className={"btn-outline" + (currency === c ? " active" : "")}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.65rem' }}
+                            onClick={() => setCurrency(c)}>
+                            {c}
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
+        function UnitCard({ unit, isSelected, onClick, formatPrice }) {
+            const cfg = STATUS_CONFIG[unit.status];
+            const interactive = unit.status !== "SOLD";
+            return (
+                <div
+                    className={"unit-card glass" + (isSelected ? " selected" : "")}
+                    style={{
+                        padding: '0.75rem', borderRadius: '2px', minHeight: '88px',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        opacity: unit.status === "SOLD" ? 0.48 : 1,
+                        cursor: interactive ? 'pointer' : 'not-allowed',
+                    }}
+                    onClick={() => interactive && onClick(unit)}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', fontWeight: 500, color: '#E5EAE5' }}>#{unit.id}</span>
+                        <span className="tag" style={{ background: cfg.bg, color: cfg.color, border: "1px solid " + cfg.color + "33" }}>
+                            <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', background: cfg.dot, marginRight: '4px', verticalAlign: 'middle' }}></span>
+                            {cfg.label}
+                        </span>
+                    </div>
+                    <div>
+                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.88rem', color: '#C9A84C', fontWeight: 400 }}>{unit.type}</div>
+                        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#7A8A7A', marginTop: '2px' }}>{unit.beds}bd · {unit.baths}ba · {unit.sqft.toLocaleString()} sqft</div>
+                        {unit.status !== "SOLD" && (
+                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: '#E5EAE5', marginTop: '4px' }}>{formatPrice(unit.priceUSD)}</div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function BookingCalendar({ selectedDate, setSelectedDate }) {
+            const today = new Date();
+            const [viewYear, setViewYear] = useState(today.getFullYear());
+            const [viewMonth, setViewMonth] = useState(today.getMonth());
+
+            const daysInMonth = getDaysInMonth(viewYear, viewMonth);
+            const firstDay = getFirstDay(viewYear, viewMonth);
+
+            function prevMonth() {
+                if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+                else setViewMonth(m => m - 1);
+            }
+            function nextMonth() {
+                if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+                else setViewMonth(m => m + 1);
+            }
+
+            function selectDay(day) {
+                const d = new Date(viewYear, viewMonth, day);
+                const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                if (d < todayNorm || d.getDay() === 0) return;
+                setSelectedDate(viewYear + "-" + String(viewMonth + 1).padStart(2,"0") + "-" + String(day).padStart(2,"0"));
+            }
+
+            function isDisabled(day) {
+                const d = new Date(viewYear, viewMonth, day);
+                const todayNorm = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                return d < todayNorm || d.getDay() === 0;
+            }
+
+            const cells = [];
+            for (let i = 0; i < firstDay; i++) cells.push(null);
+            for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+            const selParts = selectedDate ? selectedDate.split("-") : null;
+            const isCurrentView = selParts && parseInt(selParts[0]) === viewYear && parseInt(selParts[1]) - 1 === viewMonth;
+
+            return (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <button onClick={prevMonth} style={{ background: 'none', border: 'none', color: '#C9A84C', cursor: 'pointer', fontSize: '1.2rem', padding: '4px 10px' }}>‹</button>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: '#E5EAE5', fontWeight: 400 }}>{MONTHS[viewMonth]} {viewYear}</span>
+                        <button onClick={nextMonth} style={{ background: 'none', border: 'none', color: '#C9A84C', cursor: 'pointer', fontSize: '1.2rem', padding: '4px 10px' }}>›</button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '6px' }}>
+                        {DAYS.map(d => (
+                            <div key={d} style={{ textAlign: 'center', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4A5A4A', padding: '4px 0', fontFamily: 'Inter, sans-serif' }}>{d}</div>
+                        ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                        {cells.map((day, i) => {
+                            if (!day) return <div key={"e" + i} className="cal-day empty"></div>;
+                            const disabled = isDisabled(day);
+                            const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
+                            const isSelected = isCurrentView && selParts && parseInt(selParts[2]) === day;
+                            let cls = "cal-day";
+                            if (disabled) cls += " disabled";
+                            else if (isSelected) cls += " selected-day";
+                            else if (isToday) cls += " today";
+                            return <div key={day} className={cls} onClick={() => selectDay(day)}>{day}</div>;
+                        })}
+                    </div>
+                    <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', color: '#4A5A4A', marginTop: '10px', letterSpacing: '0.06em' }}>
+                        ✦ Closed Sundays · Open Mon – Sat
+                    </div>
+                </div>
+            );
+        }
+
+        function AvailabilityMap({ formatPrice }) {
+            const [filter, setFilter] = useState("ALL");
+            const [selectedUnit, setSelectedUnit] = useState(null);
+
+            const allUnits = useMemo(() => FLOORS.flatMap(f => f.units), []);
+            const counts = useMemo(() => ({
+                AVAILABLE: allUnits.filter(u => u.status === "AVAILABLE").length,
+                PENDING: allUnits.filter(u => u.status === "PENDING").length,
+                SOLD: allUnits.filter(u => u.status === "SOLD").length,
+            }), [allUnits]);
+
+            return (
+                <section id="availability" style={{ padding: 'clamp(4rem,8vh,8rem) 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div style={{ marginBottom: '2.5rem' }}>
+                        <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>02 — Availability Map</div>
+                        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 300, color: '#F0EBE1', lineHeight: 1.15, margin: 0 }}>
+                            Find Your <em style={{ color: '#C9A84C' }}>Residence</em>
+                        </h2>
+                    </div>
+
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginBottom: '2rem', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {["ALL", "AVAILABLE", "PENDING", "SOLD"].map(f => (
+                                <button key={f}
+                                    className={"btn-outline" + (filter === f ? " active" : "")}
+                                    onClick={() => { setFilter(f); setSelectedUnit(null); }}>
+                                    {f === "ALL" ? "All (" + allUnits.length + ")" : STATUS_CONFIG[f].label + " (" + counts[f] + ")"}
+                                </button>
+                            ))}
+                        </div>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.68rem', color: '#4A5A4A', letterSpacing: '0.08em' }}>Tap a unit to view details</span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: selectedUnit ? '1fr 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {FLOORS.map(({ floor, label, units }) => {
+                                const visible = units.filter(u => filter === "ALL" || u.status === filter);
+                                return (
+                                    <div key={floor} style={{ display: 'flex', gap: '0.75rem', alignItems: 'stretch' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '40px', gap: '4px' }}>
+                                            <span className="floor-label">{label}</span>
+                                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#C9A84C', fontWeight: 300 }}>{floor}</span>
+                                        </div>
+                                        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: "repeat(" + (visible.length || 1) + ", 1fr)", gap: '0.5rem' }}>
+                                            {visible.length > 0 ? visible.map(unit => (
+                                                <UnitCard key={unit.id} unit={unit} isSelected={selectedUnit && selectedUnit.id === unit.id} onClick={setSelectedUnit} formatPrice={formatPrice} />
+                                            )) : (
+                                                <div style={{ padding: '1rem', textAlign: 'center', color: '#4A5A4A', fontSize: '0.72rem', fontFamily: 'Inter, sans-serif', border: '1px dashed rgba(201,168,76,0.12)', borderRadius: '2px' }}>
+                                                    No {filter.toLowerCase()} units on this floor
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {selectedUnit && (
+                            <div className="glass" style={{ borderRadius: '2px', padding: '2rem', position: 'sticky', top: '80px', animation: 'fadeUp 0.3s ease forwards' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                                    <div>
+                                        <div className="section-eyebrow" style={{ marginBottom: '4px' }}>Unit {selectedUnit.id}</div>
+                                        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 400, color: '#F0EBE1', margin: 0 }}>{selectedUnit.type}</h3>
+                                    </div>
+                                    <button onClick={() => setSelectedUnit(null)} style={{ background: 'none', border: 'none', color: '#4A5A4A', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
+                                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: STATUS_CONFIG[selectedUnit.status].dot }}></span>
+                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: STATUS_CONFIG[selectedUnit.status].color }}>
+                                        {STATUS_CONFIG[selectedUnit.status].label}
+                                    </span>
+                                </div>
+
+                                <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)', marginBottom: '1.25rem' }}></div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem', marginBottom: '1.5rem' }}>
+                                    {[
+                                        { label: "Price", value: formatPrice(selectedUnit.priceUSD) },
+                                        { label: "Area", value: selectedUnit.sqft.toLocaleString() + " sqft" },
+                                        { label: "Bedrooms", value: selectedUnit.beds },
+                                        { label: "Bathrooms", value: selectedUnit.baths },
+                                        { label: "View", value: selectedUnit.view },
+                                        { label: "Floor", value: "Level " + selectedUnit.id[0] },
+                                    ].map(d => (
+                                        <div key={d.label} className="stat-card">
+                                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#4A5A4A', marginBottom: '4px' }}>{d.label}</div>
+                                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: '#E5EAE5', fontWeight: 400 }}>{d.value}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <a href="#booking" style={{ textDecoration: 'none', display: 'block' }}>
+                                    <button className="btn-gold" style={{ width: '100%' }}>Book a Site Visit</button>
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            );
+        }
+
+        function BookingSection() {
+            const [selectedDate, setSelectedDate] = useState("");
+            const [timeSlot, setTimeSlot] = useState("");
+            const [name, setName] = useState("");
+            const [whatsapp, setWhatsapp] = useState("");
+            const [interest, setInterest] = useState("");
+            const [isBooked, setIsBooked] = useState(false);
+            const [bookingRef, setBookingRef] = useState("");
+            const [error, setError] = useState("");
+
+            function generateRef() {
+                return "RRG-" + Math.random().toString(36).substring(2,6).toUpperCase() + "-" + Date.now().toString().slice(-4);
+            }
+
+            function handleSubmit() {
+                if (!selectedDate || !timeSlot || !name.trim() || !whatsapp.trim()) {
+                    setError("Please complete all required fields before confirming.");
+                    return;
+                }
+                setError("");
+                const ref = generateRef();
+                const log = { ref, name: name.trim(), whatsapp: whatsapp.trim(), date: selectedDate, timeSlot, interest: interest || "General Enquiry", submittedAt: new Date().toISOString(), status: "CONFIRMED" };
+                console.group("THE REENO GROUP — Booking Confirmed");
+                console.table(log);
+                console.groupEnd();
+                setBookingRef(ref);
+                setIsBooked(true);
+            }
+
+            const dateParts = selectedDate ? selectedDate.split("-") : null;
+            const friendlyDate = dateParts ? parseInt(dateParts[2]) + " " + MONTHS[parseInt(dateParts[1])-1] + " " + dateParts[0] : "";
+
+            if (isBooked) {
+                return (
+                    <section id="booking" style={{ padding: 'clamp(4rem,8vh,8rem) 1.5rem', maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
+                        <div className="glass booking-confirmation" style={{ padding: '3rem 2rem', borderRadius: '2px' }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '1rem', color: '#C9A84C' }}>✦</div>
+                            <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>Booking Confirmed</div>
+                            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.2rem', fontWeight: 300, color: '#F0EBE1', marginBottom: '0.5rem' }}>
+                                Thank you, {name.split(" ")[0]}.
+                            </h2>
+                            <p style={{ fontFamily: 'Inter, sans-serif', color: '#7A8A7A', fontSize: '0.82rem', lineHeight: 1.8, marginBottom: '2rem' }}>
+                                Your private tour is confirmed for <strong style={{ color: '#C9A84C' }}>{friendlyDate}</strong> at <strong style={{ color: '#C9A84C' }}>{timeSlot}</strong>.
+                                Our team will contact you on WhatsApp at {whatsapp} with directions and final details.
+                            </p>
+                            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)', marginBottom: '1.5rem' }}></div>
+                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#4A5A4A', marginBottom: '6px' }}>Reference Number</div>
+                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: '#C9A84C', letterSpacing: '0.05em' }}>{bookingRef}</div>
+                            <p style={{ fontFamily: 'Inter, sans-serif', color: '#4A5A4A', fontSize: '0.68rem', marginTop: '0.75rem', letterSpacing: '0.05em' }}>
+                                Save this reference for your records.
+                            </p>
+                            <button className="btn-outline" style={{ marginTop: '2rem' }} onClick={() => { setIsBooked(false); setSelectedDate(""); setTimeSlot(""); setName(""); setWhatsapp(""); setInterest(""); }}>
+                                Book Another Visit
+                            </button>
+                        </div>
+                    </section>
+                );
+            }
+
+            return (
+                <section id="booking" style={{ padding: 'clamp(4rem,8vh,8rem) 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+                    <div style={{ marginBottom: '2.5rem' }}>
+                        <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>03 — Site Visit</div>
+                        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 300, color: '#F0EBE1', lineHeight: 1.15, margin: 0 }}>
+                            Schedule a <em style={{ color: '#C9A84C' }}>Private Tour</em>
+                        </h2>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                        <div className="glass" style={{ padding: '2rem', borderRadius: '2px' }}>
+                            <div className="section-eyebrow" style={{ marginBottom: '1.25rem' }}>Select a Date</div>
+                            <BookingCalendar selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div className="glass" style={{ padding: '1.75rem', borderRadius: '2px' }}>
+                                <div className="section-eyebrow" style={{ marginBottom: '1rem' }}>Preferred Time</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    {TIME_SLOTS.map(slot => (
+                                        <button key={slot}
+                                            onClick={() => setTimeSlot(slot)}
+                                            className={"btn-outline" + (timeSlot === slot ? " active" : "")}
+                                            style={{ textAlign: 'left', padding: '0.55rem 1rem', fontSize: '0.75rem', letterSpacing: '0.04em', textTransform: 'none' }}>
+                                            ⏱ {slot}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="glass" style={{ padding: '1.75rem', borderRadius: '2px', flex: 1 }}>
+                                <div className="section-eyebrow" style={{ marginBottom: '1.1rem' }}>Contact Details</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                                    <div>
+                                        <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7A8A7A', display: 'block', marginBottom: '5px' }}>Full Name *</label>
+                                        <input className="input-field" type="text" placeholder="e.g. Sarah Nakamura" value={name} onChange={e => setName(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7A8A7A', display: 'block', marginBottom: '5px' }}>WhatsApp Number *</label>
+                                        <input className="input-field" type="tel" placeholder="+256 7XX XXX XXX" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7A8A7A', display: 'block', marginBottom: '5px' }}>Unit of Interest</label>
+                                        <select className="input-field" value={interest} onChange={e => setInterest(e.target.value)}>
+                                            <option value="">General Enquiry</option>
+                                            {FLOORS.flatMap(f => f.units).filter(u => u.status !== "SOLD").map(u => (
+                                                <option key={u.id} value={u.id}>Unit {u.id} — {u.type}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {error && (
+                                        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#C05252', letterSpacing: '0.04em' }}>{error}</div>
+                                    )}
+
+                                    {selectedDate && timeSlot && (
+                                        <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', padding: '0.7rem 1rem', borderRadius: '2px' }}>
+                                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.7rem', color: '#C9A84C', letterSpacing: '0.06em' }}>
+                                                📅 {friendlyDate} · {timeSlot}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button className="btn-gold" onClick={handleSubmit} style={{ marginTop: '0.25rem', width: '100%' }}>
+                                        Confirm Booking
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        function Footer({ formatPrice, currency, setCurrency }) {
+            return (
+                <footer style={{ borderTop: '1px solid rgba(201,168,76,0.1)', padding: '3rem 1.5rem', marginTop: '2rem' }}>
+                    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '2rem', marginBottom: '2.5rem' }}>
+                            <div>
+                                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: '#C9A84C', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>THE REENO GROUP</div>
+                                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#4A5A4A', lineHeight: 1.8, margin: 0 }}>Premium real estate development in East Africa's finest locations.</p>
+                            </div>
+                            <div>
+                                <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>Contact</div>
+                                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#7A8A7A', lineHeight: 2.1 }}>
+                                    <div>📍 Kololo Ridge, Kampala</div>
+                                    <div>📞 +256 700 000 000</div>
+                                    <div>✉️ sales@reenogroup.co.ug</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>Display Currency</div>
+                                <CurrencySelector currency={currency} setCurrency={setCurrency} />
+                                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.62rem', color: '#4A5A4A', marginTop: '0.75rem', lineHeight: 1.8 }}>
+                                    1 USD = 3,750 UGX<br />1 USD = 0.92 EUR<br /><em>Rates indicative only</em>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="section-eyebrow" style={{ marginBottom: '0.75rem' }}>Project Details</div>
+                                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.72rem', color: '#7A8A7A', lineHeight: 2.1 }}>
+                                    <div>Completion: Q4 2026</div>
+                                    <div>17 Residences · 5 Floors</div>
+                                    <div>From {formatPrice(85000)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)' }}></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem' }}>
+                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#2A3A2A', letterSpacing: '0.1em' }}>© 2026 THE REENO GROUP. All rights reserved.</div>
+                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', color: '#2A3A2A', letterSpacing: '0.06em' }}>Prices and availability subject to change without notice.</div>
+                        </div>
+                    </div>
+                </footer>
+            );
+        }
+
+        function PropertyShowcase() {
+            const [currency, setCurrency] = useState("USD");
+
+            function formatPrice(usdAmount) {
+                const converted = usdAmount * RATES[currency];
+                if (currency === "UGX") {
+                    return "UGX " + Math.round(converted / 1000).toLocaleString() + "K";
+                }
+                return SYMBOLS[currency] + Math.round(converted).toLocaleString();
+            }
+
+            return (
+                <div style={{ minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+                    {/* NAV */}
+                    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 2rem', background: 'rgba(8,11,8,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', fontWeight: 500, color: '#C9A84C', letterSpacing: '0.12em' }}>THE REENO</span>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.52rem', letterSpacing: '0.3em', color: '#7A8A7A', textTransform: 'uppercase' }}>GROUP</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <a className="nav-link" href="#availability">Availability</a>
+                            <a className="nav-link" href="#booking">Book Visit</a>
+                            <CurrencySelector currency={currency} setCurrency={setCurrency} />
+                        </div>
+                    </nav>
+
+                    {/* HERO */}
+                    <section style={{ position: 'relative', overflow: 'hidden', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '6rem 1.5rem 4rem' }}>
+                        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(201,168,76,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.035) 1px, transparent 1px)', backgroundSize: '80px 80px', pointerEvents: 'none' }}></div>
+                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(201,168,76,0.055) 0%, transparent 70%)', pointerEvents: 'none' }}></div>
+
+                        <div style={{ textAlign: 'center', maxWidth: '820px', position: 'relative', zIndex: 1 }}>
+                            <div className="animate-fade-up section-eyebrow" style={{ marginBottom: '2rem' }}>
+                                ◆ &nbsp; Kololo Ridge, Kampala &nbsp; ◆ &nbsp; Residences Now Selling
+                            </div>
+                            <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.5) 30%, rgba(201,168,76,0.5) 70%, transparent 100%)', maxWidth: '400px', margin: '0 auto 2rem' }}></div>
+
+                            <h1 className="animate-fade-up animate-delay-1 shimmer-text" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(3rem,8vw,6.5rem)', fontWeight: 300, lineHeight: 1.05, letterSpacing: '-0.01em', margin: '0 0 0.5rem' }}>
+                                Reeno<br /><em style={{ fontStyle: 'italic', fontWeight: 300 }}>Residences</em>
+                            </h1>
+
+                            <p className="animate-fade-up animate-delay-2" style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.88rem', letterSpacing: '0.06em', color: '#7A8A7A', margin: '1.5rem 0 2.5rem', lineHeight: 1.8 }}>
+                                17 bespoke residences above Kampala's most prestigious ridge.<br />
+                                Completion Q4 2026 · From {formatPrice(85000)}
+                            </p>
+
+                            <div className="animate-fade-up animate-delay-2" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                <a href="#availability"><button className="btn-gold">View Availability</button></a>
+                                <a href="#booking"><button className="btn-outline" style={{ padding: '0.75rem 2rem', fontSize: '0.75rem' }}>Book Site Visit</button></a>
+                            </div>
+
+                            <div className="animate-fade-up animate-delay-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(201,168,76,0.15)' }}>
+                                {[{ label: "Total Units", value: "17" }, { label: "Floors", value: "5" }, { label: "Starting From", value: formatPrice(85000) }].map(s => (
+                                    <div key={s.label} style={{ textAlign: 'center' }}>
+                                        <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: '#C9A84C', letterSpacing: '-0.02em' }}>{s.value}</div>
+                                        <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#4A5A4A', marginTop: '4px' }}>{s.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '0.58rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#4A5A4A', marginBottom: '8px' }}>Scroll</div>
+                            <div style={{ width: '1px', height: '36px', background: 'linear-gradient(to bottom, rgba(201,168,76,0.6), transparent)', margin: '0 auto' }}></div>
+                        </div>
+                    </section>
+
+                    <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)' }}></div>
+                    <AvailabilityMap formatPrice={formatPrice} />
+                    <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)' }}></div>
+                    <BookingSection />
+                    <Footer formatPrice={formatPrice} currency={currency} setCurrency={setCurrency} />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<PropertyShowcase />);
+    </script>
+</body>
+</html>
