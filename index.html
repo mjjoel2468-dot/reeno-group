@@ -4,18 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE REENO GROUP - Virtual Property Showcase</title>
-    <!-- Tailwind CSS for Premium Design -->
+
+    <!-- Google Fonts: Syne (headings) + Plus Jakarta Sans (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Alpine.js for Live Calculations and Interactivity -->
+    <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- EmailJS -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
     <script>
         // ── CONFIG — replace these three values before deploying ──────────────
-        const EMAILJS_PUBLIC_KEY  = "xJJV1rJxNlEmD5nfi"; 
-        const EMAILJS_SERVICE_ID  = "service_qklegrn"; 
-        const EMAILJS_TEMPLATE_ID = "template_jlo9mwp"; 
-        const WHATSAPP_NUMBER     = "256700733996";              // Real business line without the + sign
+        const EMAILJS_PUBLIC_KEY  = "xJJV1rJxNlEmD5nfi";
+        const EMAILJS_SERVICE_ID  = "service_qklegrn";
+        const EMAILJS_TEMPLATE_ID = "template_jlo9mwp";
+        const WHATSAPP_NUMBER     = "256700733996";
         // ─────────────────────────────────────────────────────────────────────
 
         (function() {
@@ -24,15 +31,54 @@
             }
         })();
     </script>
+
+    <style>
+        /* Prevents element flickering before Alpine.js boots */
+        [x-cloak] { display: none !important; }
+
+        /* ── Global typography ───────────────────────────────────────────── */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        h1, h2, h3, h4, .heading {
+            font-family: 'Syne', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        /* ── Hero background image layer ─────────────────────────────────── */
+        .hero-bg-img {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            mix-blend-mode: luminosity;
+            opacity: 0.18;
+        }
+
+        /* ── Status pill pulse dot ───────────────────────────────────────── */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
+        .pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+        /* ── Smooth date input on dark bg ────────────────────────────────── */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5);
+        }
+    </style>
 </head>
-<body class="bg-[#0A0D0A] text-[#E5EAE5] antialiased" 
-      x-data="{ 
-          currency: 'USD', 
-          rates: { USD: 1, UGX: 3750, EUR: 0.92 }, 
+
+<body class="bg-[#0A0D0A] text-[#E5EAE5] antialiased"
+      x-data="{
+          currency: 'USD',
+          rates: { USD: 1, UGX: 3750, EUR: 0.92 },
           symbols: { USD: '$', UGX: 'UGX ', EUR: '€' },
           filterStatus: 'ALL',
           selectedUnit: { id: '102', type: '2 Bedroom Suite', priceUSD: 145000, status: 'AVAILABLE', floor: 1, size: '110 SQM' },
           booking: { date: '', timeSlot: '', name: '', whatsapp: '' },
+          minDate: '',
           isBooked: false,
           bookingError: '',
           bookingLoading: false,
@@ -45,12 +91,16 @@
               { id: '203', type: '2 Bedroom Suite', priceUSD: 148000, status: 'SOLD', floor: 2, size: '112 SQM' },
               { id: '301', type: '3 Bedroom Penthouse', priceUSD: 295000, status: 'AVAILABLE', floor: 3, size: '220 SQM' }
           ],
+          init() {
+              // Set the minimum selectable date to today's date
+              const today = new Date();
+              this.minDate = today.toISOString().split('T')[0];
+          },
           formatPrice(usdAmount) {
               let converted = usdAmount * this.rates[this.currency];
               return this.symbols[this.currency] + Math.round(converted).toLocaleString();
           },
           async submitBooking() {
-              // Basic validation
               if (!this.booking.name.trim() || !this.booking.whatsapp.trim()) {
                   this.bookingError = 'Please fill in your name and WhatsApp number.';
                   return;
@@ -81,10 +131,9 @@
 
               // ── 1. EmailJS send ──────────────────────────────────────────
               try {
-                  if (EMAILJS_SERVICE_ID !== 'YOUR_EMAILJS_SERVICE_ID') {
+                  if (EMAILJS_SERVICE_ID !== 'YOUR_EMAILJS_SERVICE_ID' && EMAILJS_SERVICE_ID !== '') {
                       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
                   } else {
-                      // Dev mode: simulate send
                       await new Promise(r => setTimeout(r, 800));
                       console.info('[Reeno] EmailJS not configured — params:', templateParams);
                   }
@@ -99,10 +148,10 @@
               const waMessage = [
                   '👋 Hello, I would like to book a site visit at Reeno Residences.',
                   '',
-                  '📅 *Date:* '       + this.booking.date,
-                  '⏰ *Time:* '        + this.booking.timeSlot,
-                  '🏠 *Unit:* '       + unitLabel,
-                  '👤 *My Name:* '    + this.booking.name.trim(),
+                  '📅 *Date:* '    + this.booking.date,
+                  '⏰ *Time:* '    + this.booking.timeSlot,
+                  '🏠 *Unit:* '   + unitLabel,
+                  '👤 *My Name:* ' + this.booking.name.trim(),
               ].join('\n');
 
               window.open(
@@ -115,21 +164,81 @@
           }
       }">
 
+    <!-- STICKY NAVIGATION BAR -->
+    <nav style="background: rgba(10,13,10,0.80);"
+         class="sticky top-0 z-50 backdrop-blur-md border-b border-[#1A221B]">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+
+            <!-- Logo area -->
+            <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                     style="background: linear-gradient(135deg, #C9A84C 0%, #E5C158 100%);">
+                    <span class="heading text-[#0A0D0A] font-black text-base leading-none">R</span>
+                </div>
+
+                <div>
+                    <p class="heading text-white font-extrabold text-sm tracking-widest uppercase leading-tight">
+                        THE REENO GROUP
+                    </p>
+                    <p class="text-[#C9A84C] text-[10px] font-medium tracking-widest uppercase leading-tight">
+                        PREMIUM REAL ESTATE
+                    </p>
+                </div>
+            </div>
+
+            <!-- Status pill -->
+            <div class="flex items-center gap-2 bg-[#121813] border border-[#1A221B] rounded-full px-3.5 py-1.5">
+                <span class="pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                <span class="text-[10px] font-semibold text-gray-300 tracking-wider whitespace-nowrap">
+                    Interactive Portal Live
+                </span>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- IMMERSIVE HERO BANNER -->
+    <div class="relative overflow-hidden border-b border-[#1A221B]"
+         style="height: 320px; background: #121813;">
+
+        <div class="hero-bg-img"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#0A0D0A] via-[#0A0D0A]/60 to-transparent"></div>
+
+        <div class="absolute bottom-0 left-0 p-8 md:p-10 max-w-2xl">
+            <div class="inline-flex items-center gap-2 mb-4">
+                <span class="h-px w-5 bg-[#C9A84C]"></span>
+                <span class="text-[#C9A84C] text-[10px] font-semibold tracking-[0.2em] uppercase">
+                    Digital Twin Matrix
+                </span>
+            </div>
+
+            <h1 class="heading text-white font-extrabold text-3xl md:text-4xl leading-tight mb-3">
+                Virtual Architectural Tour
+            </h1>
+
+            <p class="text-gray-400 text-sm leading-relaxed max-w-lg">
+                Click any unit in the matrix layout below to review real-time sizing parameters,
+                live availability states, and connect instantly with our sales concierge team
+                to schedule a private site visit.
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
     <div class="min-h-screen max-w-7xl mx-auto px-4 py-8 md:py-12">
-        
-        <!-- Header Nav -->
-        <header class="flex flex-col sm:flex-row justify-between items-center border-b border-[#1A221B] pb-6 mb-10 gap-4">
+
+        <!-- Currency Converter + section label row -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
-                <h1 class="text-xl md:text-2xl font-black tracking-widest text-white uppercase">
-                    THE REENO GROUP
-                </h1>
-                <p class="text-xs text-[#C9A84C] tracking-wider mt-0.5">VIRTUAL PROPERTY SHOWCASE</p>
+                <h2 class="heading text-white font-bold text-lg">Interactive Building Map</h2>
+                <p class="text-xs text-gray-400 mt-0.5">
+                    Filter by status · select a unit · review live pricing
+                </p>
             </div>
             
-            <!-- Global Currency Converter Control -->
-            <div class="flex items-center gap-2 bg-[#121813] border border-[#1A221B] p-1 rounded-xl">
+            <div class="flex items-center gap-2 bg-[#121813] border border-[#1A221B] p-1 rounded-xl flex-shrink-0">
                 <template x-for="cur in Object.keys(rates)">
-                    <button 
+                    <button
                         @click="currency = cur"
                         :class="currency === cur ? 'bg-[#C9A84C] text-[#0A0D0A]' : 'text-gray-400 hover:text-white'"
                         class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
@@ -137,21 +246,19 @@
                     </button>
                 </template>
             </div>
-        </header>
+        </div>
 
         <!-- Main Content Layout Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             <!-- Matrix Map Layout Column -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                         <div>
-                            <h2 class="text-white font-bold text-lg">Interactive Building Map</h2>
                             <p class="text-xs text-gray-400">Select an apartment unit layout below to view details</p>
                         </div>
-                        
-                        <!-- Availability Status Filters -->
+
                         <div class="flex flex-wrap gap-1.5">
                             <template x-for="status in ['ALL', 'AVAILABLE', 'PENDING', 'SOLD']">
                                 <button
@@ -169,10 +276,9 @@
                         <template x-for="floorNum in [3, 2, 1]">
                             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-[#0A0D0A]/50 p-3 rounded-xl border border-[#1A221B]/60">
                                 <span class="text-[10px] uppercase font-bold tracking-widest text-[#C9A84C] w-16" x-text="'Floor 0' + floorNum"></span>
-                                
+
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1 w-full">
                                     <template x-for="unit in units.filter(u => u.floor === floorNum)">
-                                        <!-- Only show unit if matching filter state criteria -->
                                         <button
                                             x-show="filterStatus === 'ALL' || filterStatus === unit.status"
                                             @click="selectedUnit = unit"
@@ -183,11 +289,11 @@
                                                 'border-amber-500/20 bg-amber-500/5 text-amber-400': unit.status === 'PENDING'
                                             }"
                                             class="p-3 rounded-lg border text-left transition-all hover:scale-[1.01]">
-                                            <div class="flex justify-between items-center mb-1">
+                                            <div class="flex justify-between items-center mb-1 gap-2">
                                                 <span class="font-mono text-xs font-bold text-white" x-text="'Unit ' + unit.id"></span>
-                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-black/40" x-text="unit.status"></span>
+                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-black/40 whitespace-nowrap" x-text="unit.status"></span>
                                             </div>
-                                            <p class="text-[10px] text-gray-400 truncate" x-text="unit.type"></p>
+                                            <p class="text-[10px] text-gray-400 break-words" x-text="unit.type"></p>
                                             <p class="text-xs font-bold mt-2 text-white" x-text="formatPrice(unit.priceUSD)"></p>
                                         </button>
                                     </template>
@@ -200,17 +306,18 @@
 
             <!-- Interactivity Sidebar -->
             <div class="space-y-6">
+
                 <!-- Unit Parameters Details -->
                 <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6 relative overflow-hidden">
                     <div class="absolute top-0 right-0 bg-[#C9A84C]/10 text-[#C9A84C] text-[9px] tracking-widest uppercase font-bold px-3 py-1 rounded-bl-lg">
                         Live Specifications
                     </div>
-                    
-                    <h3 class="text-white font-bold text-base mb-4">Unit Matrix Details</h3>
+
+                    <h3 class="heading text-white font-bold text-base mb-4">Unit Matrix Details</h3>
                     <div x-show="selectedUnit" class="space-y-4">
                         <div>
                             <p class="text-xs text-gray-500">Residence Configuration</p>
-                            <p class="text-lg font-bold text-white mt-0.5" x-text="selectedUnit.type"></p>
+                            <p class="heading text-lg font-bold text-white mt-0.5" x-text="selectedUnit.type"></p>
                         </div>
                         <div class="grid grid-cols-2 gap-4 border-y border-[#1A221B] py-3 my-2">
                             <div>
@@ -224,23 +331,24 @@
                         </div>
                         <div>
                             <p class="text-xs text-gray-400">Indicative Investment Base</p>
-                            <p class="text-2xl font-black text-[#C9A84C] mt-1" x-text="formatPrice(selectedUnit.priceUSD)"></p>
+                            <p class="heading text-2xl font-black text-[#C9A84C] mt-1" x-text="formatPrice(selectedUnit.priceUSD)"></p>
                         </div>
                     </div>
-                    <div x-show="!selectedUnit">
+                    <div x-show="!selectedUnit" x-cloak>
                         <p class="text-xs text-gray-400">Select an apartment unit layout from the map matrix to review parameters.</p>
                     </div>
                 </div>
 
                 <!-- Calendar Visit Booking Form -->
                 <div class="bg-[#121813] border border-[#1A221B] rounded-2xl p-6">
-                    <h3 class="text-white font-bold text-base mb-2">Schedule Private Site Tour</h3>
+                    <h3 class="heading text-white font-bold text-base mb-2">Schedule Private Site Tour</h3>
                     <p class="text-xs text-gray-400 mb-4">Select an available date below to arrange a physical or virtual viewing.</p>
-                    
+
                     <form x-show="!isBooked" @submit.prevent="submitBooking()" class="space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Target Date</label>
-                            <input type="date" required x-model="booking.date" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]" />
+                            <label for="visit_date" class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Target Date</label>
+                            <input type="date" id="visit_date" name="visit_date" required x-model="booking.date" :min="minDate"
+                                   class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-[#C9A84C]" />
                         </div>
 
                         <div>
@@ -256,17 +364,19 @@
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Full Name</label>
-                            <input type="text" placeholder="John Doe" required x-model="booking.name" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
+                            <label for="visitor_name" class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">Full Name</label>
+                            <input type="text" id="visitor_name" name="visitor_name" placeholder="John Doe" required x-model="booking.name"
+                                   class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">WhatsApp Line</label>
-                            <input type="tel" placeholder="+256 700 000000" required x-model="booking.whatsapp" class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
+                            <label for="visitor_whatsapp" class="block text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1">WhatsApp Line</label>
+                            <input type="tel" id="visitor_whatsapp" name="visitor_whatsapp" placeholder="+256 700 000000" required x-model="booking.whatsapp"
+                                   class="w-full bg-[#0A0D0A] border border-[#1A221B] rounded-lg p-2.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]" />
                         </div>
 
                         <!-- Inline error message -->
-                        <p x-show="bookingError"
+                        <p x-show="bookingError" x-cloak
                            x-text="bookingError"
                            class="text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
                         </p>
@@ -276,7 +386,7 @@
                                 :class="bookingLoading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#b0923d]'"
                                 class="w-full bg-[#C9A84C] text-[#0A0D0A] font-bold py-3 rounded-xl uppercase tracking-widest text-[10px] transition-colors mt-2 flex items-center justify-center gap-2">
                             <span x-show="!bookingLoading">Confirm Appointment</span>
-                            <span x-show="bookingLoading" class="flex items-center gap-2">
+                            <span x-show="bookingLoading" class="flex items-center gap-2" x-cloak>
                                 <svg class="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -289,9 +399,12 @@
                     <!-- Success State Notice -->
                     <div x-show="isBooked" class="text-center py-6 bg-[#0A0D0A]/40 border border-emerald-500/20 rounded-xl p-4" x-cloak>
                         <div class="text-emerald-400 text-2xl mb-2">✓</div>
-                        <h4 class="text-white font-bold text-sm">Site Visit Requested</h4>
+                        <h4 class="heading text-white font-bold text-sm">Site Visit Requested</h4>
                         <p class="text-xs text-gray-400 mt-1">
-                            Thank you <span class="text-white font-bold" x-text="booking.name"></span>. Your session on <span class="text-white font-bold" x-text="booking.date"></span> has been compiled. Concierge tracking will initiate on WhatsApp at <span class="text-white font-bold" x-text="booking.whatsapp"></span>.
+                            Thank you <span class="text-white font-bold" x-text="booking.name"></span>.
+                            Your session on <span class="text-white font-bold" x-text="booking.date"></span>
+                            has been compiled. Concierge tracking will initiate on WhatsApp at
+                            <span class="text-white font-bold" x-text="booking.whatsapp"></span>.
                         </p>
                         <button @click="isBooked = false; booking = { date: '', timeSlot: '', name: '', whatsapp: '' }; bookingError = '';"
                                 class="mt-4 text-[10px] uppercase tracking-widest text-[#C9A84C] hover:text-white transition-colors">
